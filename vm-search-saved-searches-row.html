@@ -2782,10 +2782,10 @@ function renderFavorites() {
       del.type = 'button';
       del.title = 'Remove saved search';
       del.setAttribute('aria-label', 'Remove saved search');
-      del.style.cssText = 'background:none;border:none;padding:2px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--pf-t--global--text--color--subtle,#6a6e73);border-radius:50%;width:18px;height:18px;flex-shrink:0;';
+      del.style.cssText = 'background:var(--pf-t--global--background--color--secondary--default,#f0f0f0);border:none;padding:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#151515;border-radius:50%;width:18px;height:18px;flex-shrink:0;';
       del.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" width="10" height="10" fill="currentColor" aria-hidden="true"><path d="M310.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L160 210.7 54.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L114.7 256 9.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 301.3l105.4 105.3c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L205.3 256l105.3-105.4z"/></svg>';
-      del.addEventListener('mouseenter', () => { del.style.background='var(--pf-t--global--background--color--secondary--default,#f0f0f0)'; del.style.color='var(--pf-t--global--danger--color--default,#c9190b)'; });
-      del.addEventListener('mouseleave', () => { del.style.background='none'; del.style.color='var(--pf-t--global--text--color--subtle,#6a6e73)'; });
+      del.addEventListener('mouseenter', () => { del.style.background='var(--pf-t--global--background--color--secondary--hover,#d2d2d2)'; });
+      del.addEventListener('mouseleave', () => { del.style.background='var(--pf-t--global--background--color--secondary--default,#f0f0f0)'; });
       del.addEventListener('click', e => {
         e.stopPropagation();
         const favs2 = getFavorites(); favs2.splice(i, 1);
