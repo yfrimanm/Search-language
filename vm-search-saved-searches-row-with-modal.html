@@ -1925,12 +1925,12 @@ function renderChips() {
   chips.forEach((chip, i) => {
     const catalog   = chip.type === 'param' ? PARAM_CATALOG.find(p => p.key === chip.key) : null;
     const baseColor = catalog ? catalog.color : 'yellow';
-    const color     = chip.negated ? 'red' : baseColor;
+    const color     = baseColor;
     const label     = catalog ? catalog.label : null;
 
     /* PF6 Label Group: pf-v6-c-label-group with __main/__label/__list/__close */
     const keyText = chip.type === 'param'
-      ? (chip.negated ? 'NOT ' : '') + (label || chip.key)
+      ? (label || chip.key)
       : 'Name';
 
     const group = document.createElement('div');
@@ -1975,7 +1975,7 @@ function renderChips() {
 
       const text = document.createElement('span');
       text.className = 'pf-v6-c-label__text';
-      text.textContent = val;
+      text.textContent = chip.negated ? 'Exclude ' + val : val;
 
       const actions = document.createElement('span');
       actions.className = 'pf-v6-c-label__actions';
