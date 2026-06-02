@@ -1474,7 +1474,7 @@ const PARAM_CATALOG = [
 
   { key:'storage',
     label:'Storage class',
-    desc:'Storage class  e.g. storage:ocs-storagecluster-ceph-rbd-virtualization',
+    desc:'Storage class  e.g. storage:gold,silver',
     color:'teal',
     values:['ocs-storagecluster-ceph-rbd-virtualization','gold','silver','hostpath-provisioner','nfs-storage','local-path'],
     aliases:['storage','storage class','storageclass','sc'] },
@@ -1495,7 +1495,7 @@ const PARAM_CATALOG = [
 
   { key:'label',
     label:'Labels',
-    desc:'Metadata label  e.g. label:app=database',
+    desc:'Metadata label  e.g. label:app=database,app=frontend',
     color:'purple',
     values:[
       'app=purple-hummingbird-abc',
@@ -1518,7 +1518,7 @@ const PARAM_CATALOG = [
 
   { key:'node',
     label:'Nodes',
-    desc:'Scheduled node  e.g. node:worker-01',
+    desc:'Scheduled node  e.g. node:worker-01,worker-02',
     color:'grey',
     values:['worker-1.east-01','worker-2.east-01','worker-3.east-01','worker-4.east-01','worker-5.east-01','worker-6.east-01','worker-0.west-02','worker-1.west-02','worker-2.west-02','worker-3.west-02','worker-4.west-02','worker-0.staging-cluster-01','gpu-0.east-01','gpu-1.east-01','gpu-2.east-01','uit-422-0511'],
     aliases:['node','nodes'] },
@@ -1789,7 +1789,7 @@ function parseNL(text) {
 /* ═══════════════════════════════════════════════════
    Commit input → chip
 ═══════════════════════════════════════════════════ */
-const MULTI_VALUE_KEYS = ['status','os','project','scheduling','has'];
+const MULTI_VALUE_KEYS = ['status','os','project','scheduling','has','node','storage','label'];
 
 function commitInput() {
   const raw = inputEl.value.trim().replace(/,$/, '');
