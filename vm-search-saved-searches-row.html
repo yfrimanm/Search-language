@@ -205,11 +205,42 @@
     .page-heading h1 { font-size: 24px; font-weight: 700; margin: 0; }
 
     /* ── Toolbar search area ── */
+    .toolbar-search-row {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      column-gap: 8px;
+      align-items: center;
+      width: 100%;
+    }
+    .toolbar-search-row > .pf-v6-c-toolbar__item.pf-m-search-filter {
+      flex: none !important;
+      min-width: 0 !important;
+      width: 100%;
+      max-width: 100%;
+    }
+    .toolbar-search-row > .pf-v6-c-toolbar__item:not(.pf-m-search-filter) {
+      flex: none !important;
+    }
+    #btnSave {
+      width: 116px;
+      min-width: 116px;
+      max-width: 116px;
+      box-sizing: border-box;
+      justify-content: center;
+    }
     .pf-v6-c-toolbar__item.pf-m-search-filter {
       flex: 1 1 auto;
       min-width: 0;
     }
-    .pf-v6-c-text-input-group { width: 100%; }
+    .pf-v6-c-text-input-group { width: 100%; box-sizing: border-box; display: flex; }
+    .pf-v6-c-text-input-group__main {
+      flex: 1 1 0;
+      min-width: 0;
+      flex-wrap: nowrap;
+      gap: 4px;
+      min-height: 36px;
+      align-items: center;
+    }
     .pf-v6-c-text-input-group__text-input:focus { outline: none; }
     .pf-v6-c-text-input-group:focus-within {
       --pf-v6-c-text-input-group--BorderColor: var(--pf-t--color--blue--60, #0066cc);
@@ -217,13 +248,20 @@
     .pf-v6-c-text-input-group:focus-within .pf-v6-c-text-input-group__text {
       border-color: var(--pf-t--color--blue--60, #0066cc) !important;
     }
-    .pf-v6-c-text-input-group__main {
-      flex-wrap: wrap;
-      gap: 4px;
-      min-height: 36px;
-      align-items: center;
+    .pf-v6-c-text-input-group__utilities {
+      flex: 0 0 2rem;
+      min-width: 2rem;
     }
-    .pf-v6-c-text-input-group__text-input { min-width: 180px; flex: 1 1 180px; }
+    .pf-v6-c-text-input-group__text-input {
+      min-width: 0;
+      flex: 1 1 auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    #clearUtility.is-empty button {
+      visibility: hidden;
+      pointer-events: none;
+    }
 
     /* ── Prevent ancestor clipping of dropdown ── */
     /* PatternFly cards/toolbars may set overflow:hidden — override up the chain */
@@ -239,11 +277,12 @@
     }
 
     /* ── Suggestion menu ── */
-    .search-menu-wrap { position: relative; flex: 1 1 auto; min-width: 0; }
+    .search-menu-wrap { position: relative; flex: none; width: 100%; min-width: 0; }
     .search-menu-wrap .pf-v6-c-menu {
       position: absolute;
       top: calc(100% + 4px);
-      left: 0; right: 0;
+      left: 0;
+      width: 100%;
       z-index: 600;
       display: none;
       max-height: 360px;
@@ -617,6 +656,117 @@
       transition: opacity .25s, transform .25s; pointer-events: none;
     }
     .share-toast.show { opacity: 1; transform: translateY(0); }
+
+    /* Demo recording mode (?demo=autosuggest) — used for shareable autosuggest video */
+    body.demo-recording .page-wrap { max-width: 920px; margin: 20px auto 0; padding: 0 20px; }
+    body.demo-recording #savedRow,
+    body.demo-recording #filterRow { display: none !important; }
+    body.demo-recording .pf-v6-c-card__body { position: relative; }
+    body.demo-recording #demoDimOverlay { display: none !important; }
+    body.demo-recording .toolbar-search-row {
+      grid-template-columns: 724px 40px 116px !important;
+    }
+    body.demo-recording .search-menu-wrap {
+      position: relative;
+      z-index: 501;
+      width: 724px;
+      min-width: 724px;
+      max-width: 724px;
+    }
+    body.demo-recording #searchBar,
+    body.demo-recording .pf-v6-c-text-input-group {
+      width: 724px;
+      min-width: 724px;
+      max-width: 724px;
+    }
+    body.demo-recording #suggestMenu {
+      width: 724px;
+      min-width: 724px;
+      max-width: 724px;
+      left: 0;
+      right: auto;
+      max-height: 480px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+    }
+    body.demo-recording #suggestMenu.pf-m-open {
+      height: 360px;
+      min-height: 360px;
+      transform: none;
+    }
+    body.demo-recording #suggestMenu.pf-m-open .pf-v6-c-menu__content {
+      flex: 1 1 auto;
+      overflow-y: auto;
+    }
+    body.demo-recording .suggest-footer { flex-wrap: wrap; justify-content: center; row-gap: 6px; column-gap: 12px; }
+    body.demo-recording .pf-v6-c-menu__item.pf-m-focus { background: transparent !important; outline: none !important; }
+
+    /* Animated demo cursor + motion */
+    body.demo-recording #demoCursor {
+      position: fixed; left: 0; top: 0; z-index: 10001; pointer-events: none; opacity: 0;
+      transition: left 0.42s cubic-bezier(0.22, 1, 0.36, 1), top 0.42s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+    }
+    body.demo-recording #demoCursor.is-visible { opacity: 1; }
+    body.demo-recording #demoCursor .demo-cursor-ring {
+      position: absolute; left: -18px; top: -18px; width: 36px; height: 36px;
+      border: 2px solid rgba(0, 102, 204, 0.55); border-radius: 50%;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    body.demo-recording #demoCursor .demo-cursor-dot {
+      position: absolute; left: -4px; top: -4px; width: 8px; height: 8px;
+      background: #0066cc; border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,.25);
+    }
+    body.demo-recording #demoCursor.is-click .demo-cursor-ring { animation: demoCursorClick 0.5s ease-out; }
+    body.demo-recording #demoCursor.is-hover .demo-cursor-ring { transform: scale(1.15); border-color: rgba(0, 102, 204, 0.85); }
+    @keyframes demoCursorClick {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(0.85); opacity: 0.7; }
+      100% { transform: scale(1.25); opacity: 0; }
+    }
+    body.demo-recording:not(.demo-menu-ready) #suggestMenu.pf-m-open {
+      animation: demoMenuSlideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    @keyframes demoMenuSlideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    body.demo-recording:not(.demo-menu-ready) #suggestMenu.pf-m-open .pf-v6-c-menu__list-item {
+      animation: demoItemIn 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    @keyframes demoItemIn {
+      from { opacity: 0; transform: translateX(-8px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    body.demo-recording #suggestMenu.pf-m-open .pf-v6-c-menu__list-item:nth-child(1) { animation-delay: 0.03s; }
+    body.demo-recording #suggestMenu.pf-m-open .pf-v6-c-menu__list-item:nth-child(2) { animation-delay: 0.06s; }
+    body.demo-recording #suggestMenu.pf-m-open .pf-v6-c-menu__list-item:nth-child(3) { animation-delay: 0.09s; }
+    body.demo-recording #suggestMenu.pf-m-open .pf-v6-c-menu__list-item:nth-child(4) { animation-delay: 0.12s; }
+    body.demo-recording #suggestMenu.pf-m-open .pf-v6-c-menu__list-item:nth-child(5) { animation-delay: 0.15s; }
+    body.demo-recording #suggestMenu.pf-m-open .pf-v6-c-menu__list-item:nth-child(6) { animation-delay: 0.18s; }
+    body.demo-recording #suggestMenu.pf-m-open .pf-v6-c-menu__list-item:nth-child(7) { animation-delay: 0.21s; }
+    body.demo-recording #suggestMenu.pf-m-open .pf-v6-c-menu__list-item:nth-child(8) { animation-delay: 0.24s; }
+    body.demo-recording #suggestMenu.pf-m-open .pf-v6-c-menu__list-item:nth-child(9) { animation-delay: 0.27s; }
+    body.demo-recording #suggestMenu.pf-m-open .pf-v6-c-menu__list-item:nth-child(10) { animation-delay: 0.30s; }
+    body.demo-recording #suggestMenu.pf-m-open .pf-v6-c-menu__list-item:nth-child(11) { animation-delay: 0.33s; }
+    body.demo-recording #suggestMenu.pf-m-open .pf-v6-c-menu__list-item:nth-child(12) { animation-delay: 0.36s; }
+    body.demo-recording .demo-item-pulse { animation: demoItemPulse 0.65s ease-in-out infinite; border-radius: 4px; }
+    @keyframes demoItemPulse {
+      0%, 100% { background: rgba(0, 102, 204, 0.08); }
+      50% { background: rgba(0, 102, 204, 0.2); }
+    }
+    body.demo-recording #keyTooltip {
+      animation: demoTooltipIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    @keyframes demoTooltipIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    body.demo-recording .pf-v6-c-label-group__label {
+      animation: demoChipIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+    @keyframes demoChipIn {
+      from { opacity: 0; transform: scale(0.6); }
+      to { opacity: 1; transform: scale(1); }
+    }
   </style>
 </head>
 <body>
@@ -642,10 +792,10 @@
         <!-- ══ TOOLBAR ROW 1: search bar ══ -->
         <div class="pf-v6-c-toolbar" id="mainToolbar" style="padding-bottom:12px;">
           <div class="pf-v6-c-toolbar__content">
-            <div class="pf-v6-c-toolbar__content-section" style="flex-wrap:nowrap;gap:8px;">
+            <div class="pf-v6-c-toolbar__content-section toolbar-search-row">
 
               <!-- Search input (grows) -->
-              <div class="pf-v6-c-toolbar__item pf-m-search-filter" style="flex:1;min-width:0;">
+              <div class="pf-v6-c-toolbar__item pf-m-search-filter">
                 <div class="search-menu-wrap">
                   <div class="pf-v6-c-text-input-group" id="searchBar">
                     <div class="pf-v6-c-text-input-group__main pf-m-icon">
@@ -661,7 +811,7 @@
                         aria-expanded="false" aria-controls="suggestMenu" aria-haspopup="listbox" />
                     </div>
                     <div class="pf-v6-c-text-input-group__utilities">
-                      <span id="clearUtility" style="display:none;">
+                      <span id="clearUtility" class="is-empty">
                         <button class="pf-v6-c-button pf-m-plain" type="button" id="btnClearInput"
                           aria-label="Clear search input" title="Clear search input">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
@@ -712,19 +862,16 @@
 
                       <!-- Group 2 -->
                       <div class="syntax-group">
-                        <span class="syntax-group-label">How much does it use?</span>
-                        <div class="syntax-row"><code class="try-me">vcpu&gt;4</code><span class="syntax-row-desc">vCPU count</span></div>
-                        <div class="syntax-row"><code class="try-me">memory&gt;=8GiB</code><span class="syntax-row-desc">Memory</span></div>
+                        <span class="syntax-group-label">Hardware devices</span>
                         <div class="syntax-row"><code class="try-me">has:gpu</code><span class="syntax-row-desc">Hardware device</span></div>
-                        <span class="syntax-note">vCPU and memory also support &gt; &gt;= &lt; &lt;=</span>
                       </div>
 
                       <!-- Group 3 -->
                       <div class="syntax-group">
                         <span class="syntax-group-label">Where does it live?</span>
-                        <div class="syntax-row"><code class="try-me">cluster:local-cluster</code><span class="syntax-row-desc">Cluster</span></div>
+                        <div class="syntax-row"><code class="try-me">cluster:cluster-name-1</code><span class="syntax-row-desc">Cluster</span></div>
                         <div class="syntax-row"><code class="try-me">project:default</code><span class="syntax-row-desc">Namespace</span></div>
-                        <div class="syntax-row"><code class="try-me">node:worker-01</code><span class="syntax-row-desc">Scheduled node</span></div>
+                        <div class="syntax-row"><code class="try-me">node:node-name-1</code><span class="syntax-row-desc">Scheduled node</span></div>
                       </div>
 
                       <!-- Group 4 -->
@@ -733,7 +880,7 @@
                         <div class="syntax-row"><code class="try-me">status:running,paused</code><span class="syntax-row-desc">Running or paused VMs</span></div>
                         <div class="syntax-row"><code class="try-me">-has:gpu</code><span class="syntax-row-desc">Exclude VMs with a GPU</span></div>
                         <div class="syntax-row"><code class="try-me">web-server</code><span class="syntax-row-desc">Find by partial name</span></div>
-                        <div class="syntax-row"><code class="try-me">status:running vcpu&gt;4 project:default</code><span class="syntax-row-desc">Combined</span></div>
+                        <div class="syntax-row"><code class="try-me">status:running project:default</code><span class="syntax-row-desc">Combined</span></div>
                       </div>
 
                     </div><!-- /body -->
@@ -762,7 +909,7 @@
         </div>
 
         <!-- ══ Filter dropdowns row ══ -->
-        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:0 0 0;">
+        <div id="filterRow" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:0 0 0;">
           <div class="filter-dd-wrap" id="projectWrap">
             <button class="pf-v6-c-menu-toggle pf-m-small filter-dd-btn" type="button"
               id="btnProjectFilter" aria-expanded="false" aria-haspopup="listbox">
@@ -825,6 +972,9 @@
         </div>
 
         <!-- Logic preview -->
+
+        <!-- Table actions bar + VM list (dimmed together in demo recording) -->
+        <div id="vmListDimArea">
 
         <!-- Table actions bar -->
         <div class="table-actions-bar" id="tableActionsBar" style="margin-top:12px;">
@@ -1046,7 +1196,7 @@
         <!-- hidden but kept for JS refs -->
         <span id="resultCount" style="display:none;"></span>
 
-        <div style="overflow-x:auto;">
+        <div id="vmListSection" style="overflow-x:auto;">
           <table class="pf-v6-c-table pf-m-compact" role="grid" aria-label="Virtual machines">
             <thead class="pf-v6-c-table__thead">
               <tr class="pf-v6-c-table__tr" role="row">
@@ -1092,6 +1242,9 @@
           </table>
         </div>
 
+        </div><!-- /vmListDimArea -->
+
+        <div id="demoDimOverlay" aria-hidden="true"></div>
       </div>
     </div>
   </div><!-- /main -->
@@ -1352,11 +1505,11 @@
             <div class="pf-v6-c-form__group-control">
               <div class="pf-v6-c-form-control">
                 <input class="pf-v6-c-form-control__input" type="text" id="adv-node"
-                       placeholder="e.g. worker-01  or  gpu-0" list="adv-node-list" />
+                       placeholder="e.g. node-name-1  or  node-name-2" list="adv-node-list" />
                 <datalist id="adv-node-list">
-                  <option value="worker-1.east-01"/><option value="worker-2.east-01"/>
-                  <option value="gpu-0.east-01"/><option value="gpu-1.east-01"/>
-                  <option value="worker-0.west-02"/><option value="worker-0.staging-cluster-01"/>
+                  <option value="node-name-1"/><option value="node-name-2"/>
+                  <option value="node-name-3"/><option value="node-name-4"/>
+                  <option value="node-name-5"/>
                 </datalist>
               </div>
             </div>
@@ -1427,9 +1580,9 @@ const PARAM_CATALOG = [
 
   { key:'cluster',
     label:'Cluster',
-    desc:'Cluster name  e.g. cluster:production  cluster:local-cluster',
+    desc:'Cluster name  e.g. cluster:cluster-name-1  cluster:cluster-name-2',
     color:'purple',
-    values:['production','staging','east-01','west-02'],
+    values:['cluster-name-1','cluster-name-2','cluster-name-3','cluster-name-4','cluster-name-5'],
     aliases:['cluster','clusters'] },
 
   { key:'project',
@@ -1464,13 +1617,13 @@ const PARAM_CATALOG = [
     label:'vCPU',
     desc:'vCPU count  e.g. vcpu>2  vcpu>4  (also supports >=)',
     color:'blue',
-    values:[] },
+    values:['>2', '>4', '>=4', '>=8'] },
 
   { key:'memory',
     label:'Memory',
     desc:'RAM  e.g. memory>4GiB  memory>8GiB  (also supports >=)',
     color:'blue',
-    values:[] },
+    values:['>4GiB', '>8GiB', '>=8GiB', '>=16GiB'] },
 
   { key:'storage',
     label:'Storage class',
@@ -1518,9 +1671,9 @@ const PARAM_CATALOG = [
 
   { key:'node',
     label:'Nodes',
-    desc:'Scheduled node  e.g. node:worker-01,worker-02',
+    desc:'Scheduled node  e.g. node:node-name-1  node:node-name-2',
     color:'grey',
-    values:['worker-1.east-01','worker-2.east-01','worker-3.east-01','worker-4.east-01','worker-5.east-01','worker-6.east-01','worker-0.west-02','worker-1.west-02','worker-2.west-02','worker-3.west-02','worker-4.west-02','worker-0.staging-cluster-01','gpu-0.east-01','gpu-1.east-01','gpu-2.east-01','uit-422-0511'],
+    values:['node-name-1','node-name-2','node-name-3','node-name-4','node-name-5'],
     aliases:['node','nodes'] },
 ];
 
@@ -1543,30 +1696,39 @@ const STATUS_STYLE = {
 
 /* ── Mock VM data ── */
 const VMS = [
-  { name:'api-gateway-01',   project:'default',   status:'Running',               os:'RHEL',    vcpu:4,  memory:8,   storage:'ceph-rbd',             hardware:[],                   node:'worker-1.east-01',            labels:['env=prod','tier=app'],    cluster:'east-01',          ip:'10.128.2.14',  conditions:['DataVolumesReady=True','LiveMigratable=True'] },
-  { name:'db-primary-01',    project:'openshift',     status:'Running',               os:'RHEL',    vcpu:8,  memory:32,  storage:'ceph-rbd',             hardware:[],                   node:'worker-2.east-01',            labels:['env=prod','tier=db'],     cluster:'east-01',          ip:'10.128.2.21',  conditions:['DataVolumesReady=True','LiveMigratable=True'] },
-  { name:'db-replica-01',    project:'openshift',     status:'Running',               os:'RHEL',    vcpu:4,  memory:16,  storage:'ceph-rbd',             hardware:[],                   node:'worker-3.east-01',            labels:['env=prod','tier=db'],     cluster:'east-01',          ip:'10.128.2.35',  conditions:['DataVolumesReady=True','LiveMigratable=True'] },
-  { name:'ml-training-01',   project:'cnv-qe',    status:'Running',               os:'RHEL',    vcpu:16, memory:64,  storage:'local-path',           hardware:['gpu'],              node:'gpu-0.east-01',               labels:['env=prod','tier=ml'],     cluster:'east-01',          ip:'10.128.3.11',  conditions:['DataVolumesReady=True','LiveMigratable=False'] },
-  { name:'ml-inference-02',  project:'cnv-qe',    status:'Paused',                os:'RHEL',    vcpu:8,  memory:32,  storage:'local-path',           hardware:['gpu'],              node:'gpu-1.east-01',               labels:['env=prod','tier=ml'],     cluster:'east-01',          ip:'10.128.3.19',  conditions:['DataVolumesReady=True','Paused=True'] },
-  { name:'win-desktop-01',   project:'yifat',     status:'Running',               os:'Windows', vcpu:4,  memory:16,  storage:'nfs-storage',          hardware:['host-device'],      node:'worker-0.west-02',            labels:['env=prod','tier=app'],    cluster:'west-02',          ip:'10.131.0.8',   conditions:['DataVolumesReady=True','LiveMigratable=False'] },
-  { name:'win-desktop-02',   project:'yifat',     status:'Stopped',               os:'Windows', vcpu:4,  memory:8,   storage:'nfs-storage',          hardware:[],                   node:'worker-1.west-02',            labels:['env=prod','tier=app'],    cluster:'west-02',          ip:'—',            conditions:['DataVolumesReady=True','LiveMigratable=False'] },
-  { name:'cnv-ui-web-01',    project:'cnv-ui',    status:'Running',               os:'RHEL',    vcpu:2,  memory:4,   storage:'ceph-rbd',             hardware:[],                   node:'worker-2.west-02',            labels:['env=prod','tier=web'],    cluster:'west-02',          ip:'10.131.0.44',  conditions:['DataVolumesReady=True','LiveMigratable=True'] },
-  { name:'cnv-ui-web-02',    project:'cnv-ui',    status:'Error',                 os:'RHEL',    vcpu:2,  memory:4,   storage:'ceph-rbd',             hardware:[],                   node:'worker-2.west-02',            labels:['env=prod','tier=web'],    cluster:'west-02',          ip:'10.131.0.52',  conditions:['DataVolumesReady=False','LiveMigratable=False'] },
-  { name:'dev-sandbox-01',   project:'default',       status:'Running',               os:'Fedora',  vcpu:2,  memory:4,   storage:'local-path',           hardware:[],                   node:'worker-0.staging-cluster-01', labels:['env=staging','tier=app'], cluster:'staging-cluster-01',ip:'10.132.1.6',   conditions:['DataVolumesReady=True','LiveMigratable=True'] },
-  { name:'dev-sandbox-02',   project:'default',     status:'Stopped',               os:'Fedora',  vcpu:2,  memory:4,   storage:'local-path',           hardware:[],                   node:'worker-0.staging-cluster-01', labels:['env=staging','tier=app'], cluster:'staging-cluster-01',ip:'—',            conditions:['DataVolumesReady=True'] },
-  { name:'infra-monitor-01', project:'default',   status:'Running',               os:'CentOS',  vcpu:4,  memory:8,   storage:'ceph-rbd',             hardware:[],                   node:'worker-4.east-01',            labels:['env=prod','tier=infra'],  cluster:'east-01',          ip:'10.128.4.77',  conditions:['DataVolumesReady=True','LiveMigratable=True'] },
-  { name:'infra-lb-01',      project:'default',   status:'Running',               os:'RHEL',    vcpu:2,  memory:4,   storage:'ceph-rbd',             hardware:[],                   node:'worker-5.east-01',            labels:['env=prod','tier=infra'],  cluster:'east-01',          ip:'10.128.4.83',  conditions:['DataVolumesReady=True','LiveMigratable=True'] },
-  { name:'gpu-render-01',    project:'adam',      status:'Running',               os:'RHEL',    vcpu:32, memory:128, storage:'local-path',           hardware:['gpu','host-device'],node:'gpu-2.east-01',               labels:['env=prod','tier=render'], cluster:'east-01',          ip:'10.128.5.44',  conditions:['DataVolumesReady=True','LiveMigratable=False'] },
-  { name:'legacy-app-01',    project:'batya',     status:'Paused',                os:'RHEL',    vcpu:2,  memory:8,   storage:'nfs-storage',          hardware:[],                   node:'worker-3.west-02',            labels:['env=prod','tier=legacy'], cluster:'west-02',          ip:'10.131.1.14',  conditions:['DataVolumesReady=True','Paused=True'] },
-  { name:'mig-vm-01',        project:'openshift', status:'Running',               os:'RHEL',    vcpu:4,  memory:16,  storage:'ceph-rbd',             hardware:[],                   node:'worker-6.east-01',            labels:['env=prod','tier=app'],    cluster:'east-01',          ip:'10.128.2.91',  conditions:['DataVolumesReady=True','LiveMigratable=True'] },
-  { name:'terminating-vm-01',project:'default',   status:'Terminating',           os:'Fedora',  vcpu:2,  memory:4,   storage:'local-path',           hardware:[],                   node:'worker-0.staging-cluster-01', labels:['env=staging','tier=app'], cluster:'staging-cluster-01',ip:'—',            conditions:['DataVolumesReady=True'] },
-  { name:'wfvb-win-01',      project:'openshift', status:'Stopped',               os:'Windows', vcpu:4, memory:16,  storage:'nfs-storage',          hardware:[],                   node:'worker-4.west-02',            labels:['env=prod','tier=app'],    cluster:'west-02',          ip:'—',            conditions:['DataVolumesReady=True'] },
+  { name:'api-gateway-01',   project:'default',   status:'Running',               os:'RHEL',    vcpu:4,  memory:8,   storage:'ceph-rbd',             hardware:[],                   node:'node-name-1',            labels:['env=prod','tier=app'],    cluster:'cluster-name-1',          ip:'10.128.2.14',  conditions:['DataVolumesReady=True','LiveMigratable=True'] },
+  { name:'db-primary-01',    project:'openshift',     status:'Running',               os:'RHEL',    vcpu:8,  memory:32,  storage:'ceph-rbd',             hardware:[],                   node:'node-name-1',            labels:['env=prod','tier=db'],     cluster:'cluster-name-1',          ip:'10.128.2.21',  conditions:['DataVolumesReady=True','LiveMigratable=True'] },
+  { name:'db-replica-01',    project:'openshift',     status:'Running',               os:'RHEL',    vcpu:4,  memory:16,  storage:'ceph-rbd',             hardware:[],                   node:'node-name-1',            labels:['env=prod','tier=db'],     cluster:'cluster-name-1',          ip:'10.128.2.35',  conditions:['DataVolumesReady=True','LiveMigratable=True'] },
+  { name:'ml-training-01',   project:'cnv-qe',    status:'Running',               os:'RHEL',    vcpu:16, memory:64,  storage:'local-path',           hardware:['gpu'],              node:'node-name-1',               labels:['env=prod','tier=ml'],     cluster:'cluster-name-1',          ip:'10.128.3.11',  conditions:['DataVolumesReady=True','LiveMigratable=False'] },
+  { name:'ml-inference-02',  project:'cnv-qe',    status:'Paused',                os:'RHEL',    vcpu:8,  memory:32,  storage:'local-path',           hardware:['gpu'],              node:'node-name-1',               labels:['env=prod','tier=ml'],     cluster:'cluster-name-1',          ip:'10.128.3.19',  conditions:['DataVolumesReady=True','Paused=True'] },
+  { name:'win-desktop-01',   project:'yifat',     status:'Running',               os:'Windows', vcpu:4,  memory:16,  storage:'nfs-storage',          hardware:['host-device'],      node:'node-name-2',            labels:['env=prod','tier=app'],    cluster:'cluster-name-2',          ip:'10.131.0.8',   conditions:['DataVolumesReady=True','LiveMigratable=False'] },
+  { name:'win-desktop-02',   project:'yifat',     status:'Stopped',               os:'Windows', vcpu:4,  memory:8,   storage:'nfs-storage',          hardware:[],                   node:'node-name-2',            labels:['env=prod','tier=app'],    cluster:'cluster-name-2',          ip:'—',            conditions:['DataVolumesReady=True','LiveMigratable=False'] },
+  { name:'cnv-ui-web-01',    project:'cnv-ui',    status:'Running',               os:'RHEL',    vcpu:2,  memory:4,   storage:'ceph-rbd',             hardware:[],                   node:'node-name-2',            labels:['env=prod','tier=web'],    cluster:'cluster-name-2',          ip:'10.131.0.44',  conditions:['DataVolumesReady=True','LiveMigratable=True'] },
+  { name:'cnv-ui-web-02',    project:'cnv-ui',    status:'Error',                 os:'RHEL',    vcpu:2,  memory:4,   storage:'ceph-rbd',             hardware:[],                   node:'node-name-2',            labels:['env=prod','tier=web'],    cluster:'cluster-name-2',          ip:'10.131.0.52',  conditions:['DataVolumesReady=False','LiveMigratable=False'] },
+  { name:'dev-sandbox-01',   project:'default',       status:'Running',               os:'Fedora',  vcpu:2,  memory:4,   storage:'local-path',           hardware:[],                   node:'node-name-3', labels:['env=staging','tier=app'], cluster:'cluster-name-3',ip:'10.132.1.6',   conditions:['DataVolumesReady=True','LiveMigratable=True'] },
+  { name:'dev-sandbox-02',   project:'default',     status:'Stopped',               os:'Fedora',  vcpu:2,  memory:4,   storage:'local-path',           hardware:[],                   node:'node-name-3', labels:['env=staging','tier=app'], cluster:'cluster-name-3',ip:'—',            conditions:['DataVolumesReady=True'] },
+  { name:'infra-monitor-01', project:'default',   status:'Running',               os:'CentOS',  vcpu:4,  memory:8,   storage:'ceph-rbd',             hardware:[],                   node:'node-name-1',            labels:['env=prod','tier=infra'],  cluster:'cluster-name-1',          ip:'10.128.4.77',  conditions:['DataVolumesReady=True','LiveMigratable=True'] },
+  { name:'infra-lb-01',      project:'default',   status:'Running',               os:'RHEL',    vcpu:2,  memory:4,   storage:'ceph-rbd',             hardware:[],                   node:'node-name-1',            labels:['env=prod','tier=infra'],  cluster:'cluster-name-1',          ip:'10.128.4.83',  conditions:['DataVolumesReady=True','LiveMigratable=True'] },
+  { name:'gpu-render-01',    project:'adam',      status:'Running',               os:'RHEL',    vcpu:32, memory:128, storage:'local-path',           hardware:['gpu','host-device'],node:'node-name-1',               labels:['env=prod','tier=render'], cluster:'cluster-name-1',          ip:'10.128.5.44',  conditions:['DataVolumesReady=True','LiveMigratable=False'] },
+  { name:'legacy-app-01',    project:'batya',     status:'Paused',                os:'RHEL',    vcpu:2,  memory:8,   storage:'nfs-storage',          hardware:[],                   node:'node-name-2',            labels:['env=prod','tier=legacy'], cluster:'cluster-name-2',          ip:'10.131.1.14',  conditions:['DataVolumesReady=True','Paused=True'] },
+  { name:'mig-vm-01',        project:'openshift', status:'Running',               os:'RHEL',    vcpu:4,  memory:16,  storage:'ceph-rbd',             hardware:[],                   node:'node-name-1',            labels:['env=prod','tier=app'],    cluster:'cluster-name-1',          ip:'10.128.2.91',  conditions:['DataVolumesReady=True','LiveMigratable=True'] },
+  { name:'terminating-vm-01',project:'default',   status:'Terminating',           os:'Fedora',  vcpu:2,  memory:4,   storage:'local-path',           hardware:[],                   node:'node-name-3', labels:['env=staging','tier=app'], cluster:'cluster-name-3',ip:'—',            conditions:['DataVolumesReady=True'] },
+  { name:'wfvb-win-01',      project:'openshift', status:'Stopped',               os:'Windows', vcpu:4, memory:16,  storage:'nfs-storage',          hardware:[],                   node:'node-name-2',            labels:['env=prod','tier=app'],    cluster:'cluster-name-2',          ip:'—',            conditions:['DataVolumesReady=True'] },
 ];
 
 /* ═══════════════════════════════════════════════════
    State
 ═══════════════════════════════════════════════════ */
 let chips = [];
+const DEMO_MODE = new URLSearchParams(location.search).get('demo');
+const IS_DEMO_AUTOSUGGEST = DEMO_MODE === 'autosuggest';
+const IS_DEMO_RECORDING = DEMO_MODE === 'autosuggest' || DEMO_MODE === 'animated';
+if (IS_DEMO_RECORDING) {
+  document.body.classList.add('demo-recording');
+  window.__demoCursorHover = (on) => {
+    document.getElementById('demoCursor')?.classList.toggle('is-hover', !!on);
+  };
+}
 
 /* ═══════════════════════════════════════════════════
    DOM refs
@@ -1614,6 +1776,30 @@ const savedRow       = document.getElementById('savedRow');
 const btnSave        = document.getElementById('btnSave');
 const clearUtility   = document.getElementById('clearUtility');
 const shareToast     = document.getElementById('shareToast');
+
+function hasActiveFilters() {
+  return chips.length > 0 || !!inputEl.value.trim();
+}
+
+function syncClearUtility() {
+  if (!clearUtility) return;
+  const hasValue = hasActiveFilters();
+  clearUtility.style.display = '';
+  clearUtility.classList.toggle('is-empty', !hasValue);
+}
+
+function updateFilterControls() {
+  const active = hasActiveFilters();
+  if (btnSave) {
+    btnSave.disabled = !active;
+    btnSave.title = active ? 'Save current search' : 'Add at least one filter first';
+  }
+  syncClearUtility();
+  const chipsRow = document.getElementById('chipsRow');
+  if (chipsRow) chipsRow.style.display = active ? '' : 'none';
+}
+
+syncClearUtility();
 
 /* ═══════════════════════════════════════════════════
    localStorage helpers
@@ -1913,13 +2099,6 @@ function renderChips() {
   if (!host) return;
   host.innerHTML = '';
 
-  if (!chips.length) {
-    chipsRow.style.display = 'none';
-    syncFilterDropdowns();
-    return;
-  }
-  chipsRow.style.display = '';
-
   chips.forEach((chip, i) => {
     const catalog   = chip.type === 'param' ? PARAM_CATALOG.find(p => p.key === chip.key) : null;
     const baseColor = catalog ? catalog.color : 'yellow';
@@ -2018,6 +2197,7 @@ function renderChips() {
   });
 
   syncFilterDropdowns();
+  updateFilterControls();
 }
 
 /* ═══════════════════════════════════════════════════
@@ -2104,6 +2284,7 @@ let PAGE_SIZE = 10;
 let currentPage = 1;
 
 function renderResults() {
+  if (IS_DEMO_RECORDING && suggestMenu.classList.contains('pf-m-open')) return;
   const dir = sortDir === 'asc' ? 1 : -1;
   const vms = filterVMs().slice().sort((a, b) => {
     let av = '', bv = '';
@@ -2569,7 +2750,7 @@ function syncStatusMenuCheckboxes() {
 })();
 
 /* Clear-all chips button */
-document.getElementById('btnClearAllChips')?.addEventListener('click', () => { chips = []; refresh(); });
+document.getElementById('btnClearAllChips')?.addEventListener('click', () => { chips = []; inputEl.value = ''; refresh(); closeSuggest(); });
 
 
 /* ── Flyout submenus (Control / Migration) ── */
@@ -2625,11 +2806,8 @@ document.getElementById('btnClearAllChips')?.addEventListener('click', () => { c
 
   // Click-to-try: paste snippet into search bar
   function pasteToSearch(text) {
-    const input = document.getElementById('queryInput');
-    if (!input) return;
-      input.value = text.trim();
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    input.focus();
+    loadQuery(text.trim());
+    inputEl.focus();
     closePopover();
   }
 
@@ -2833,9 +3011,12 @@ function resetMenuNav() { menuNavIdx = -1; }
 
 function buildMenuGroup(title) {
   const g  = document.createElement('div'); g.className = 'pf-v6-c-menu__group';
-  const h  = document.createElement('h1'); h.className = 'pf-v6-c-menu__group-title'; h.innerHTML = title;
+  if (title) {
+    const h = document.createElement('h1'); h.className = 'pf-v6-c-menu__group-title'; h.innerHTML = title;
+    g.appendChild(h);
+  }
   const ul = document.createElement('ul'); ul.className = 'pf-v6-c-menu__list'; ul.setAttribute('role','listbox');
-  g.appendChild(h); g.appendChild(ul);
+  g.appendChild(ul);
   return { group: g, list: ul };
 }
 
@@ -2854,7 +3035,7 @@ function renderMultiValueMenu(vl, catalog, prefixKey, alreadySel, lastPartial, c
 
   function updateInput(selectedArr) {
     inputEl.value = selectedArr.length ? colonMatchPrefix + selectedArr.join(',') + ',' : '';
-    if (clearUtility) clearUtility.style.display = inputEl.value ? '' : 'none';
+    if (clearUtility) syncClearUtility();
     if (!inputEl.value) { closeSuggest(); return; }
     buildSuggestions();
   }
@@ -2927,6 +3108,11 @@ function buildSuggestions() {
   suggestMenu.innerHTML = '';
   resetMenuNav();
 
+  if (IS_DEMO_AUTOSUGGEST && !raw.trim() && !document.body.classList.contains('demo-browse')) {
+    closeSuggest();
+    return;
+  }
+
   const content = document.createElement('div'); content.className = 'pf-v6-c-menu__content';
   let hasAny = false;
 
@@ -2956,6 +3142,7 @@ function buildSuggestions() {
       });
       content.appendChild(group); hasAny = true;
     }
+    if (!IS_DEMO_AUTOSUGGEST) {
     // Divider
     { const hr = document.createElement('hr'); hr.className = 'pf-v6-c-divider'; hr.setAttribute('role','separator'); content.appendChild(hr); }
     // 2. Recent searches — always shown, empty state if none
@@ -3026,9 +3213,12 @@ function buildSuggestions() {
       }
       content.appendChild(group); hasAny = true;
     }
+    }
     suggestMenu.appendChild(content);
     addSuggestFooter();
-    suggestMenu.classList.add('pf-m-open'); return;
+    suggestMenu.classList.add('pf-m-open');
+    updateDemoDim();
+    return;
   }
 
   /* ── User has typed something ── */
@@ -3078,7 +3268,7 @@ function buildSuggestions() {
         }
       }
     }
-    if (hasAny) { suggestMenu.appendChild(content); addSuggestFooter(); suggestMenu.classList.add('pf-m-open'); return; }
+    if (hasAny) { suggestMenu.appendChild(content); addSuggestFooter(); suggestMenu.classList.add('pf-m-open'); updateDemoDim(); return; }
   }
 
   // 2. Partial key match — typing "s" shows status:, storage:
@@ -3124,7 +3314,7 @@ function buildSuggestions() {
               existingArr.push(v);
             }
             inputEl.value = (mCur ? mCur[1] : base) + existingArr.join(',') + ',';
-            if (clearUtility) clearUtility.style.display = '';
+            syncClearUtility();
             buildSuggestions(); // keep dropdown open
           } else {
             inputEl.value = exactKey.key + ':' + v; commitInput();
@@ -3147,6 +3337,10 @@ function buildSuggestions() {
               addMenuItem(vl, v, '', () => { inputEl.value = exactKey.key + ':' + v; commitInput(); });
             });
           });
+        } else if (['vcpu','memory'].includes(exactKey.key)) {
+          exactKey.values.forEach(v => {
+            addMenuItem(vl, v, '', () => { inputEl.value = exactKey.key + v; commitInput(); });
+          });
         } else {
           exactKey.values.forEach(v => {
             const displayLabel = DATE_LABELS[v] || v;
@@ -3160,7 +3354,8 @@ function buildSuggestions() {
       const { group, list } = buildMenuGroup('');
       matchingKeys.forEach(p => {
         const badge = `<span class="suggest-key-badge">${p.key}${['vcpu','memory'].includes(p.key)?'':':'}</span>`;
-        addMenuItem(list, badge + p.desc, '', () => {
+        const label = `<span style="font-size:12px;color:var(--pf-t--global--text--color--subtle);">${p.label}</span>`;
+        addMenuItem(list, badge + label, '', () => {
           inputEl.value = p.key + (['vcpu','memory'].includes(p.key) ? '' : ':');
           inputEl.focus(); buildSuggestions();
         }, true);
@@ -3187,11 +3382,19 @@ function buildSuggestions() {
     }
   }
 
-  if (hasAny) { suggestMenu.appendChild(content); addSuggestFooter(); suggestMenu.classList.add('pf-m-open'); }
+    if (hasAny) { suggestMenu.appendChild(content); addSuggestFooter(); suggestMenu.classList.add('pf-m-open'); }
   else closeSuggest();
+  updateDemoDim();
 }
 
-function closeSuggest() { suggestMenu.classList.remove('pf-m-open'); suggestMenu.innerHTML = ''; }
+function closeSuggest() { suggestMenu.classList.remove('pf-m-open'); suggestMenu.innerHTML = ''; updateDemoDim(); }
+
+function updateDemoDim() {
+  if (!IS_DEMO_RECORDING) return;
+  if (suggestMenu.classList.contains('pf-m-open')) {
+    document.body.classList.add('demo-menu-ready');
+  }
+}
 function closeSavedMenu() { /* no-op: saved searches row has no dropdown */ }
 
 /* ═══════════════════════════════════════════════════
@@ -3204,9 +3407,7 @@ function refresh() {
   renderFavorites();
   const qs = chipsToString();
   if (qs) pushRecent(qs);
-  const hasFilters = chips.length > 0;
-  btnSave.disabled = !hasFilters;
-  if (clearUtility) clearUtility.style.display = (chips.length || inputEl.value) ? '' : 'none';
+  updateFilterControls();
   // Update URL query param (?q=…) dynamically
   const url = new URL(location.href);
   if (qs) url.searchParams.set('q', qs); else url.searchParams.delete('q');
@@ -3233,7 +3434,7 @@ function loadFromURL() {
 /* ═══════════════════════════════════════════════════
    Event wiring
 ═══════════════════════════════════════════════════ */
-inputEl.addEventListener('input',  () => { buildSuggestions(); renderResults(); if (clearUtility) clearUtility.style.display = (chips.length || inputEl.value) ? '' : 'none'; });
+inputEl.addEventListener('input',  () => { buildSuggestions(); renderResults(); updateFilterControls(); });
 inputEl.addEventListener('focus',  buildSuggestions);
 inputEl.addEventListener('blur',   () => setTimeout(closeSuggest, 160));
 
@@ -3276,6 +3477,7 @@ inputEl.addEventListener('keydown', e => {
 document.getElementById('searchBar').addEventListener('click', () => inputEl.focus());
 
 btnSave.addEventListener('click', () => {
+  if (inputEl.value.trim()) commitInput();
   const qs = chipsToString();
   if (!qs) return;
   const favs = getFavorites();
