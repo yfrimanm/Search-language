@@ -2418,12 +2418,6 @@ function getFilterValueLabel(key) {
   return FILTER_VALUE_LABELS[key] || PARAM_CATALOG.find(p => p.key === key)?.label?.toLowerCase() || key;
 }
 
-function formatAppliedValues(values) {
-  if (values.length === 1) return values[0];
-  if (values.length === 2) return `${values[0]} and ${values[1]}`;
-  return `${values.slice(0, -1).join(', ')}, and ${values[values.length - 1]}`;
-}
-
 function validateEnumParamChip(chip) {
   const catalog = PARAM_CATALOG.find(p => p.key === chip.key);
   const validValues = [];
