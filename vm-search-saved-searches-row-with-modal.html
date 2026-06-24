@@ -1508,7 +1508,7 @@
   </div>
 </div>
 
-<!-- Delete default saved search modal -->
+<!-- Delete favorite saved search modal -->
 <div class="pf-v6-c-backdrop" id="deleteSavedSearchModal" hidden aria-hidden="true">
   <div class="pf-v6-c-bullseye">
     <div class="pf-v6-c-modal-box" role="dialog" aria-modal="true"
@@ -1518,7 +1518,7 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
       <div class="pf-v6-c-modal-box__header">
-        <h1 class="pf-v6-c-modal-box__title" id="deleteSavedSearchModalTitle">Delete default saved search?</h1>
+        <h1 class="pf-v6-c-modal-box__title" id="deleteSavedSearchModalTitle">Delete favorite saved search?</h1>
       </div>
       <div class="pf-v6-c-modal-box__body">
         <p id="deleteSavedSearchModalBody" style="margin:0;font-size:14px;line-height:1.5;"></p>
@@ -4155,7 +4155,7 @@ function openDeleteDefaultSavedSearchModal(item, idx) {
   const body = document.getElementById('deleteSavedSearchModalBody');
   if (!modal || !body) return;
   pendingDeleteSavedSearchIdx = idx;
-  body.textContent = `"${item.name}", which is your default saved search, will be lost. Another saved search will become the default, or none if this is the last one.`;
+  body.textContent = `"${item.name}", which is your favorite saved search, will be lost. Another saved search will become your favorite, or none if this is the last one.`;
   modal.removeAttribute('hidden');
   modal.setAttribute('aria-hidden', 'false');
   document.getElementById('btnConfirmDeleteSavedSearch')?.focus();
