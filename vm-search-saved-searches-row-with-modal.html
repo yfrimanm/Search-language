@@ -431,6 +431,12 @@
       font-style: normal;
       display: block;
     }
+    .saved-menu-empty__save-icon {
+      display: inline-flex;
+      vertical-align: text-bottom;
+      margin: 0 2px;
+      color: var(--pf-t--global--text--color--regular);
+    }
     /* Trash icon stays neutral on hover — no red */
     .saved-del.pf-v6-c-button.pf-m-plain,
     .saved-del.pf-v6-c-button.pf-m-plain:hover,
@@ -3470,8 +3476,21 @@ function renderFavorites() {
     if (filter) {
       empty.textContent = `No saved searches match ${savedFilterText.trim()}.`;
     } else {
-      empty.innerHTML = '<span class="saved-menu-empty__title">No saved searches yet.</span>'
-        + '<span class="saved-menu-empty__hint">Create a filter and click the Save search icon in the search bar to keep your frequent queries.</span>';
+      const title = document.createElement('span');
+      title.className = 'saved-menu-empty__title';
+      title.textContent = 'No saved searches yet.';
+      empty.appendChild(title);
+
+      const hint = document.createElement('span');
+      hint.className = 'saved-menu-empty__hint';
+      hint.append('Create a filter and click the Save search ');
+      const saveIcon = btnSave?.querySelector('.rh-ui-icon-save')?.cloneNode(true);
+      if (saveIcon) {
+        saveIcon.classList.add('saved-menu-empty__save-icon');
+        hint.appendChild(saveIcon);
+      }
+      hint.append(' in the search bar to keep your frequent queries.');
+      empty.appendChild(hint);
     }
     savedMenuList.appendChild(empty);
     return;
