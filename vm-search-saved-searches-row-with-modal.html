@@ -2281,17 +2281,19 @@ function parseToken(token) {
     }
   }
 
-  // key:values (colon form) — also accepts alias keys
-  const colon = t.match(/^([a-z]+):(.*)$/i);
+  // key:values (colon form) — also accepts alias keys and hyphenated unknown keys
+  const colon = t.match(/^([a-z][a-z0-9-]*):(.*)$/i);
   if (colon) {
+    const rawKey = colon[1];
     const raw = colon[2].trim();
-    const key = canonicalKey(colon[1]);
-    const known = PARAM_KEYS.includes(colon[1].toLowerCase()) || PARAM_CATALOG.find(p => p.key === key);
-    if (known) {
-      if (!raw) return null; // incomplete — waiting for value
-      const vals = raw.split(',').map(s => s.trim()).filter(Boolean);
-      return { type:'param', key, values: vals, negated };
+    const key = canonicalKey(rawKey);
+    const known = PARAM_KEYS.includes(rawKey.toLowerCase()) || PARAM_CATALOG.find(p => p.key === key);
+    if (!known) {
+      return { type:'unknown_filter', filterName: rawKey, raw: token };
     }
+    if (!raw) return null; // incomplete — waiting for value
+    const vals = raw.split(',').map(s => s.trim()).filter(Boolean);
+    return { type:'param', key, values: vals, negated };
   }
 
   // Fallback: keyword (matches Name / Description) — negated bare text not supported
@@ -2357,6 +2359,66 @@ function parseNL(text) {
    Commit input → chip
 ═══════════════════════════════════════════════════ */
 const MULTI_VALUE_KEYS = ['status','os','project','scheduling','has','node','storage','label'];
+const ENUM_VALIDATE_KEYS = new Set(['status', 'os', 'has', 'created']);
+
+const FILTER_VALUE_LABELS = {
+  status: 'status',
+  os: 'operating system',
+  has: 'hardware device',
+  created: 'date created',
+};
+
+function getFilterValueLabel(key) {
+  return FILTER_VALUE_LABELS[key] || PARAM_CATALOG.find(p => p.key === key)?.label?.toLowerCase() || key;
+}
+
+function formatAppliedValues(values) {
+  if (values.length === 1) return values[0];
+  if (values.length === 2) return `${values[0]} and ${values[1]}`;
+  return `${values.slice(0, -1).join(', ')}, and ${values[values.length - 1]}`;
+}
+
+function validateEnumParamChip(chip) {
+  const catalog = PARAM_CATALOG.find(p => p.key === chip.key);
+  const validValues = [];
+  const dropped = [];
+  chip.values.forEach(raw => {
+    const match = catalog?.values.find(v => v.toLowerCase() === raw.toLowerCase());
+    if (match) validValues.push(match);
+    else dropped.push(raw);
+  });
+  return {
+    chip: validValues.length ? { ...chip, values: validValues } : null,
+    dropped,
+  };
+}
+
+function buildPartialInvalidValuesToast(key, invalidValue, validValues) {
+  const label = getFilterValueLabel(key);
+  const article = /^[aeiou]/i.test(label) ? 'an' : 'a';
+  return `We couldn't find ${article} ${label} named "${invalidValue}". Filtering by ${formatAppliedValues(validValues)} instead.`;
+}
+
+function buildAllInvalidValuesToast(key, invalidValues) {
+  const quoted = invalidValues.length === 1
+    ? `"${invalidValues[0]}"`
+    : invalidValues.map(v => `"${v}"`).join(', ');
+  if (key === 'status') {
+    return `${quoted} isn't a valid status. Select a status from the list.`;
+  }
+  const label = getFilterValueLabel(key);
+  return `${quoted} isn't a valid ${label}. Select a ${label} from the list.`;
+}
+
+function buildUnknownFilterToast(filterName) {
+  return `"${filterName}" isn't a recognized filter. Check the spelling or select a filter from the list.`;
+}
+
+function addOrReplaceParamChip(list, chip) {
+  const idx = list.findIndex(x => x.type === 'param' && x.key === chip.key);
+  if (idx >= 0) list.splice(idx, 1);
+  list.push(chip);
+}
 
 function commitInput() {
   const raw = inputEl.value.trim().replace(/,$/, '');
@@ -2377,19 +2439,47 @@ function commitInput() {
 
   const tokens = splitTokens(raw);
   const newChips = [];
+  let toastMsg = null;
+
   tokens.forEach(t => {
     const c = parseToken(t);
     if (!c) return;
-    if (c.type === 'param') {
-      const idx = newChips.findIndex(x => x.type === 'param' && x.key === c.key);
-      if (idx >= 0) newChips.splice(idx, 1);
+
+    if (c.type === 'unknown_filter') {
+      toastMsg = buildUnknownFilterToast(c.filterName);
+      return;
     }
-    newChips.push(c);
+
+    if (c.type === 'param' && ENUM_VALIDATE_KEYS.has(c.key)) {
+      const { chip, dropped } = validateEnumParamChip(c);
+      if (dropped.length) {
+        if (!chip) {
+          toastMsg = buildAllInvalidValuesToast(c.key, dropped);
+          return;
+        }
+        toastMsg = buildPartialInvalidValuesToast(c.key, dropped[0], chip.values);
+        addOrReplaceParamChip(newChips, chip);
+        return;
+      }
+    }
+
+    if (c.type === 'param') addOrReplaceParamChip(newChips, c);
+    else newChips.push(c);
   });
 
-  chips = newChips.length ? newChips : chips;
-  syncInputFromChips();
-  refresh();
+  if (newChips.length) {
+    chips = newChips;
+    syncInputFromChips();
+    refresh();
+  } else if (toastMsg) {
+    syncInputFromChips();
+  } else {
+    chips = [];
+    syncInputFromChips();
+    refresh();
+  }
+
+  if (toastMsg) showWarningToast(toastMsg);
 }
 
 /* ═══════════════════════════════════════════════════
@@ -3934,6 +4024,10 @@ function showToast(msg, variant = 'success') {
   pendingDeleteUndo = null;
   hideDeleteToast();
   shareToastList.appendChild(buildPfToastAlert({ message: msg, variant, timeout: 8000 }));
+}
+
+function showWarningToast(msg) {
+  showToast(msg, 'warning');
 }
 
 /* ═══════════════════════════════════════════════════
