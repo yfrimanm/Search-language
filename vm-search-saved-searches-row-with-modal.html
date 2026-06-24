@@ -2414,6 +2414,42 @@ function buildUnknownFilterToast(filterName) {
   return `"${filterName}" isn't a recognized filter. Check the spelling or select a filter from the list.`;
 }
 
+function buildInvalidValueBullet(key, value) {
+  return `"${value}" isn't a valid ${getFilterValueLabel(key)}`;
+}
+
+function buildUnknownFilterBullet(filterName) {
+  return `"${filterName}" isn't a recognized filter`;
+}
+
+function buildValidationToastMessage(skipIssues) {
+  if (!skipIssues.length) return null;
+
+  const hasUnknown = skipIssues.some(i => i.type === 'unknown_filter');
+  const hasInvalid = skipIssues.some(i => i.type === 'invalid_value');
+  const useBulletList = skipIssues.length > 1 || (hasUnknown && hasInvalid);
+
+  if (!useBulletList) {
+    const issue = skipIssues[0];
+    if (issue.type === 'unknown_filter') {
+      return buildUnknownFilterToast(issue.filterName);
+    }
+    if (issue.applied?.length) {
+      return buildPartialInvalidValuesToast(issue.key, issue.value, issue.applied);
+    }
+    return buildAllInvalidValuesToast(issue.key, [issue.value]);
+  }
+
+  return {
+    heading: "Some filters couldn't be applied:",
+    bullets: skipIssues.map(issue => (
+      issue.type === 'unknown_filter'
+        ? buildUnknownFilterBullet(issue.filterName)
+        : buildInvalidValueBullet(issue.key, issue.value)
+    )),
+  };
+}
+
 function addOrReplaceParamChip(list, chip) {
   const idx = list.findIndex(x => x.type === 'param' && x.key === chip.key);
   if (idx >= 0) list.splice(idx, 1);
@@ -2439,14 +2475,14 @@ function commitInput() {
 
   const tokens = splitTokens(raw);
   const newChips = [];
-  let toastMsg = null;
+  const skipIssues = [];
 
   tokens.forEach(t => {
     const c = parseToken(t);
     if (!c) return;
 
     if (c.type === 'unknown_filter') {
-      toastMsg = buildUnknownFilterToast(c.filterName);
+      skipIssues.push({ type: 'unknown_filter', filterName: c.filterName });
       return;
     }
 
@@ -2454,10 +2490,15 @@ function commitInput() {
       const { chip, dropped } = validateEnumParamChip(c);
       if (dropped.length) {
         if (!chip) {
-          toastMsg = buildAllInvalidValuesToast(c.key, dropped);
+          dropped.forEach(value => skipIssues.push({ type: 'invalid_value', key: c.key, value }));
           return;
         }
-        toastMsg = buildPartialInvalidValuesToast(c.key, dropped[0], chip.values);
+        dropped.forEach(value => skipIssues.push({
+          type: 'invalid_value',
+          key: c.key,
+          value,
+          applied: chip.values,
+        }));
         addOrReplaceParamChip(newChips, chip);
         return;
       }
@@ -2466,6 +2507,8 @@ function commitInput() {
     if (c.type === 'param') addOrReplaceParamChip(newChips, c);
     else newChips.push(c);
   });
+
+  const toastMsg = buildValidationToastMessage(skipIssues);
 
   if (newChips.length) {
     chips = newChips;
@@ -3951,20 +3994,38 @@ function buildPfToastAlert({ message, variant = 'success', undoLabel, onUndo, ti
   sr.className = 'pf-v6-u-screen-reader';
   sr.textContent = `${variantLabel} alert:`;
   title.appendChild(sr);
-  title.appendChild(document.createTextNode(message));
+
+  const isBulletList = message && typeof message === 'object' && Array.isArray(message.bullets);
+  const plainText = isBulletList ? message.heading : message;
+  title.appendChild(document.createTextNode(plainText));
 
   const action = document.createElement('div');
   action.className = 'pf-v6-c-alert__action';
   const closeBtn = document.createElement('button');
   closeBtn.type = 'button';
   closeBtn.className = 'pf-v6-c-button pf-m-plain';
-  closeBtn.setAttribute('aria-label', `Close ${variantLabel.toLowerCase()} alert: ${message}`);
+  closeBtn.setAttribute('aria-label', `Close ${variantLabel.toLowerCase()} alert: ${plainText}`);
   closeBtn.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
   closeBtn.addEventListener('click', hideDeleteToast);
   action.appendChild(closeBtn);
 
   alert.appendChild(icon);
   alert.appendChild(title);
+
+  if (isBulletList) {
+    const desc = document.createElement('div');
+    desc.className = 'pf-v6-c-alert__description';
+    const ul = document.createElement('ul');
+    ul.style.margin = '0';
+    ul.style.paddingLeft = '1.25rem';
+    message.bullets.forEach(line => {
+      const li = document.createElement('li');
+      li.textContent = line;
+      ul.appendChild(li);
+    });
+    desc.appendChild(ul);
+    alert.appendChild(desc);
+  }
 
   if (undoLabel && onUndo) {
     const actionGroup = document.createElement('div');
