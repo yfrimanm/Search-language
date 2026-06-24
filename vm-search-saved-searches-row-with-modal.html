@@ -3963,7 +3963,7 @@ function openDeleteDefaultSavedSearchModal(item, idx) {
   const body = document.getElementById('deleteSavedSearchModalBody');
   if (!modal || !body) return;
   pendingDeleteSavedSearchIdx = idx;
-  body.textContent = `"${item.name}" is your default saved search. Another saved search will become the default, or none if this is the last one.`;
+  body.textContent = `"${item.name}", which is your default saved search, will be lost. Another saved search will become the default, or none if this is the last one.`;
   modal.removeAttribute('hidden');
   modal.setAttribute('aria-hidden', 'false');
   document.getElementById('btnConfirmDeleteSavedSearch')?.focus();
