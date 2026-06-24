@@ -418,8 +418,18 @@
     }
     .saved-menu-item__del:hover { color: var(--pf-t--global--text--color--regular); background: var(--pf-t--global--background--color--secondary--default); }
     .saved-menu-empty {
-      padding: 16px 14px; font-size: 13px; font-style: italic;
+      padding: 16px 14px; font-size: 13px;
       color: var(--pf-t--global--text--color--subtle);
+      line-height: 1.5;
+    }
+    .saved-menu-empty__title {
+      font-style: normal;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .saved-menu-empty__hint {
+      font-style: normal;
+      display: block;
     }
     /* Trash icon stays neutral on hover — no red */
     .saved-del.pf-v6-c-button.pf-m-plain,
@@ -3457,9 +3467,12 @@ function renderFavorites() {
   if (!favs.length) {
     const empty = document.createElement('li');
     empty.className = 'saved-menu-empty';
-    empty.innerHTML = filter
-      ? 'No saved searches match that name.'
-      : 'No saved searches yet.<br><span style="font-style:normal;">Click <strong>Save</strong> in the search bar to add one.</span>';
+    if (filter) {
+      empty.textContent = `No saved searches match ${savedFilterText.trim()}.`;
+    } else {
+      empty.innerHTML = '<span class="saved-menu-empty__title">No saved searches yet.</span>'
+        + '<span class="saved-menu-empty__hint">Create a filter and click the Save search icon in the search bar to keep your frequent queries.</span>';
+    }
     savedMenuList.appendChild(empty);
     return;
   }
