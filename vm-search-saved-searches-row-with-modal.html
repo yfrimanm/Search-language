@@ -3480,7 +3480,13 @@ function renderFavorites() {
     const empty = document.createElement('li');
     empty.className = 'saved-menu-empty';
     if (filter) {
-      empty.textContent = `No saved searches match [${savedFilterText.trim()}].`;
+      const filterText = savedFilterText.trim();
+      empty.append('No saved searches match [');
+      const entry = document.createElement('span');
+      entry.className = 'saved-menu-empty__emphasis';
+      entry.textContent = filterText;
+      empty.appendChild(entry);
+      empty.append('].');
     } else {
       const title = document.createElement('span');
       title.className = 'saved-menu-empty__title';
