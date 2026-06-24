@@ -424,12 +424,18 @@
     }
     .saved-menu-empty__title {
       font-style: normal;
+      font-weight: 600;
+      color: var(--pf-t--global--text--color--regular);
       display: block;
       margin-bottom: 4px;
     }
     .saved-menu-empty__hint {
       font-style: normal;
       display: block;
+    }
+    .saved-menu-empty__emphasis {
+      font-weight: 600;
+      color: var(--pf-t--global--text--color--regular);
     }
     .saved-menu-empty__save-icon {
       display: inline-flex;
@@ -3483,7 +3489,12 @@ function renderFavorites() {
 
       const hint = document.createElement('span');
       hint.className = 'saved-menu-empty__hint';
-      hint.append('Create a filter and click the Save search ');
+      hint.append('Create a filter and click the ');
+      const saveLabel = document.createElement('span');
+      saveLabel.className = 'saved-menu-empty__emphasis';
+      saveLabel.textContent = 'Save search';
+      hint.appendChild(saveLabel);
+      hint.append(' ');
       const saveIcon = btnSave?.querySelector('.rh-ui-icon-save')?.cloneNode(true);
       if (saveIcon) {
         saveIcon.classList.add('saved-menu-empty__save-icon');
