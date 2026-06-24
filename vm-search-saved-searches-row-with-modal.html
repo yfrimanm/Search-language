@@ -2393,33 +2393,24 @@ function validateEnumParamChip(chip) {
   };
 }
 
-function buildPartialInvalidValuesToast(key, invalidValue, validValues) {
+function buildInvalidValueToast(key, value, keptValues) {
   const label = getFilterValueLabel(key);
-  const article = /^[aeiou]/i.test(label) ? 'an' : 'a';
-  return `We couldn't find ${article} ${label} named "${invalidValue}". Filtering by ${formatAppliedValues(validValues)} instead.`;
-}
-
-function buildAllInvalidValuesToast(key, invalidValues) {
-  const quoted = invalidValues.length === 1
-    ? `"${invalidValues[0]}"`
-    : invalidValues.map(v => `"${v}"`).join(', ');
-  if (key === 'status') {
-    return `${quoted} isn't a valid status. Select a status from the list.`;
+  if (keptValues?.length) {
+    return `"${value}" isn't a valid ${label}. Searching ${formatAppliedValues(keptValues)} instead.`;
   }
-  const label = getFilterValueLabel(key);
-  return `${quoted} isn't a valid ${label}. Select a ${label} from the list.`;
+  return `"${value}" isn't a valid ${label}.`;
 }
 
 function buildUnknownFilterToast(filterName) {
-  return `"${filterName}" isn't a recognized filter. Check the spelling or select a filter from the list.`;
+  return `"${filterName}" isn't a recognized filter. Check spelling or pick a filter from the list.`;
 }
 
 function buildInvalidValueBullet(key, value) {
-  return `"${value}" isn't a valid ${getFilterValueLabel(key)}`;
+  return `"${value}" isn't a valid ${getFilterValueLabel(key)}.`;
 }
 
 function buildUnknownFilterBullet(filterName) {
-  return `"${filterName}" isn't a recognized filter`;
+  return `"${filterName}" isn't a recognized filter.`;
 }
 
 function buildValidationToastMessage(skipIssues) {
@@ -2434,10 +2425,7 @@ function buildValidationToastMessage(skipIssues) {
     if (issue.type === 'unknown_filter') {
       return buildUnknownFilterToast(issue.filterName);
     }
-    if (issue.applied?.length) {
-      return buildPartialInvalidValuesToast(issue.key, issue.value, issue.applied);
-    }
-    return buildAllInvalidValuesToast(issue.key, [issue.value]);
+    return buildInvalidValueToast(issue.key, issue.value, issue.applied);
   }
 
   return {
