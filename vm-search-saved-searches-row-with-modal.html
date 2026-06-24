@@ -2442,7 +2442,8 @@ function validateEnumParamChip(chip) {
 function buildInvalidValueToast(key, value, keptValues) {
   const label = getFilterValueLabel(key);
   if (keptValues?.length) {
-    return `"${value}" isn't a valid ${label}. Searching ${formatAppliedValues(keptValues)} instead.`;
+    const article = /^[aeiou]/i.test(label) ? 'an' : 'a';
+    return `We couldn't find ${article} ${label} named "${value}". Try other ${label} types instead.`;
   }
   return `"${value}" isn't a valid ${label}.`;
 }
