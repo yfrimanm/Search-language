@@ -2418,6 +2418,12 @@ function getFilterValueLabel(key) {
   return FILTER_VALUE_LABELS[key] || PARAM_CATALOG.find(p => p.key === key)?.label?.toLowerCase() || key;
 }
 
+function formatAppliedValues(values) {
+  if (values.length === 1) return values[0];
+  if (values.length === 2) return `${values[0]} and ${values[1]}`;
+  return `${values.slice(0, -1).join(', ')}, and ${values[values.length - 1]}`;
+}
+
 function validateEnumParamChip(chip) {
   const catalog = PARAM_CATALOG.find(p => p.key === chip.key);
   const validValues = [];
@@ -2437,7 +2443,7 @@ function buildInvalidValueToast(key, value, keptValues) {
   const label = getFilterValueLabel(key);
   if (keptValues?.length) {
     const article = /^[aeiou]/i.test(label) ? 'an' : 'a';
-    return `We couldn't find ${article} ${label} named "${value}". Try other ${label} types instead.`;
+    return `We couldn't find ${article} ${label} named "${value}". Filtering by ${formatAppliedValues(keptValues)} instead.`;
   }
   return `"${value}" isn't a valid ${label}.`;
 }
