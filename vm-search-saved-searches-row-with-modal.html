@@ -781,23 +781,13 @@
     }
     .kebab-btn:hover { background: var(--pf-t--global--background--color--secondary--default); }
 
-    /* ── Toast ── */
-    .share-toast {
-      position: fixed; bottom: 20px; right: 20px;
-      background: #3e8635; color: #fff;
-      padding: 10px 18px; border-radius: 6px; font-size: 14px;
-      box-shadow: 0 4px 12px rgba(0,0,0,.2);
-      z-index: 999; opacity: 0; transform: translateY(8px);
-      transition: opacity .25s, transform .25s; pointer-events: none;
-      display: flex; align-items: center; gap: 12px;
+    /* ── Toast alert group (PF6) ── */
+    #shareToastGroup {
+      z-index: 1100;
     }
-    .share-toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
-    .share-toast__undo {
-      background: transparent; border: 0; padding: 0;
-      color: #fff; font-size: 14px; font-weight: 600;
-      text-decoration: underline; cursor: pointer;
+    #shareToastGroup .pf-v6-c-alert-group__list:empty {
+      display: none;
     }
-    .share-toast__undo:hover { color: #f0f0f0; }
   </style>
 </head>
 <body>
@@ -1431,7 +1421,9 @@
 
 </div><!-- /page-wrap -->
 
-<div class="share-toast" id="shareToast"></div>
+<div class="pf-v6-c-alert-group pf-m-toast" id="shareToastGroup" aria-live="polite" aria-atomic="false">
+  <ul class="pf-v6-c-alert-group__list" id="shareToastList"></ul>
+</div>
 <div id="savedDescTooltip" role="tooltip"></div>
 
 <!-- Save search modal -->
@@ -2007,7 +1999,7 @@ const savedMenu      = document.getElementById('savedMenu');
 const savedMenuList  = document.getElementById('savedMenuList');
 const savedSearchFilter = document.getElementById('savedSearchFilter');
 const clearUtility   = document.getElementById('clearUtility');
-const shareToast     = document.getElementById('shareToast');
+const shareToastList = document.getElementById('shareToastList');
 
 const DEMO_SAVED = [
   { name:'saved-search-name-1', query:'status:Running project:default', description:'Running VMs in the default project', starred:true },
@@ -3572,7 +3564,7 @@ function buildSuggestions() {
     // 1. Search by — 2-column key grid with micro-copy hint
     { const { group, list } = buildMenuGroup('Search by');
       const hint = document.createElement('div'); hint.className = 'filter-by-hint';
-      hint.textContent = 'Hover any key for details';
+      hint.textContent = 'Hover any filter for details';
       group.insertBefore(hint, list);
       list.className += ' key-grid';
       PARAM_CATALOG.forEach(p => {
@@ -3656,7 +3648,7 @@ function buildSuggestions() {
           e.preventDefault(); e.stopPropagation();
           expanded = !expanded;
           render(expanded ? nlExamples : nlExamples.slice(0, 3));
-          more.textContent = expanded ? 'Show fewer' : 'Show more examples';
+          more.textContent = expanded ? 'Show fewer examples' : 'Show more examples';
           group.appendChild(more);
         });
         group.appendChild(more);
@@ -3828,63 +3820,120 @@ function refresh() {
 }
 
 /* ═══════════════════════════════════════════════════
-   Toast
+   Toast (PF6 alert group)
 ═══════════════════════════════════════════════════ */
 let deleteUndoTimer = null;
 let pendingDeleteUndo = null;
+let toastDismissTimer = null;
+
+const TOAST_ICONS = {
+  success: 'fa-circle-check',
+  info: 'fa-circle-info',
+  warning: 'fa-triangle-exclamation',
+  danger: 'fa-circle-exclamation',
+};
 
 function hideDeleteToast() {
   if (deleteUndoTimer) clearTimeout(deleteUndoTimer);
   deleteUndoTimer = null;
-  shareToast.classList.remove('show');
-  setTimeout(() => {
-    if (!shareToast.classList.contains('show')) {
-      shareToast.innerHTML = '';
-    }
-  }, 250);
+  if (toastDismissTimer) clearTimeout(toastDismissTimer);
+  toastDismissTimer = null;
+  if (shareToastList) shareToastList.innerHTML = '';
+}
+
+function buildPfToastAlert({ message, variant = 'success', undoLabel, onUndo, timeout = 2800 }) {
+  const variantLabel = variant.charAt(0).toUpperCase() + variant.slice(1);
+  const item = document.createElement('li');
+  item.className = 'pf-v6-c-alert-group__item';
+
+  const alert = document.createElement('div');
+  alert.className = `pf-v6-c-alert pf-m-${variant}`;
+  alert.setAttribute('role', 'alert');
+  alert.setAttribute('aria-label', `${variantLabel} toast alert`);
+
+  const icon = document.createElement('div');
+  icon.className = 'pf-v6-c-alert__icon';
+  icon.innerHTML = `<i class="fa-solid ${TOAST_ICONS[variant] || TOAST_ICONS.info}" aria-hidden="true"></i>`;
+
+  const title = document.createElement('div');
+  title.className = 'pf-v6-c-alert__title';
+  const sr = document.createElement('span');
+  sr.className = 'pf-v6-u-screen-reader';
+  sr.textContent = `${variantLabel} alert:`;
+  title.appendChild(sr);
+  title.appendChild(document.createTextNode(message));
+
+  const action = document.createElement('div');
+  action.className = 'pf-v6-c-alert__action';
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'pf-v6-c-button pf-m-plain';
+  closeBtn.setAttribute('aria-label', `Close ${variantLabel.toLowerCase()} alert: ${message}`);
+  closeBtn.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
+  closeBtn.addEventListener('click', hideDeleteToast);
+  action.appendChild(closeBtn);
+
+  alert.appendChild(icon);
+  alert.appendChild(title);
+
+  if (undoLabel && onUndo) {
+    const actionGroup = document.createElement('div');
+    actionGroup.className = 'pf-v6-c-alert__action-group';
+    const undoBtn = document.createElement('button');
+    undoBtn.type = 'button';
+    undoBtn.className = 'pf-v6-c-button pf-m-link pf-m-inline';
+    undoBtn.textContent = undoLabel;
+    undoBtn.addEventListener('click', () => {
+      onUndo();
+      hideDeleteToast();
+    });
+    actionGroup.appendChild(undoBtn);
+    alert.appendChild(actionGroup);
+  }
+
+  alert.appendChild(action);
+  item.appendChild(alert);
+
+  if (timeout > 0) {
+    toastDismissTimer = setTimeout(hideDeleteToast, timeout);
+  }
+
+  return item;
 }
 
 function showDeletedSavedSearchToast(name, removedItem, originalIndex) {
   if (deleteUndoTimer) clearTimeout(deleteUndoTimer);
   pendingDeleteUndo = null;
-
-  shareToast.innerHTML = '';
-  const text = document.createElement('span');
-  text.textContent = `Deleted "${name}".`;
-  const undoBtn = document.createElement('button');
-  undoBtn.type = 'button';
-  undoBtn.className = 'share-toast__undo';
-  undoBtn.textContent = 'Undo';
-  undoBtn.addEventListener('click', () => {
-    if (pendingDeleteUndo) {
-      const list = getFavorites();
-      const insertAt = Math.min(Math.max(pendingDeleteUndo.index, 0), list.length);
-      list.splice(insertAt, 0, pendingDeleteUndo.item);
-      setFavorites(list);
-      renderFavorites();
-      pendingDeleteUndo = null;
-    }
-    hideDeleteToast();
-  });
-  shareToast.appendChild(text);
-  shareToast.appendChild(undoBtn);
-  shareToast.classList.add('show');
+  hideDeleteToast();
 
   pendingDeleteUndo = { item: removedItem, index: originalIndex };
+  shareToastList.appendChild(buildPfToastAlert({
+    message: `Deleted "${name}".`,
+    variant: 'success',
+    undoLabel: 'Undo',
+    onUndo: () => {
+      if (pendingDeleteUndo) {
+        const list = getFavorites();
+        const insertAt = Math.min(Math.max(pendingDeleteUndo.index, 0), list.length);
+        list.splice(insertAt, 0, pendingDeleteUndo.item);
+        setFavorites(list);
+        renderFavorites();
+        pendingDeleteUndo = null;
+      }
+    },
+    timeout: 0,
+  }));
+
   deleteUndoTimer = setTimeout(() => {
     pendingDeleteUndo = null;
     hideDeleteToast();
   }, 8000);
 }
 
-function showToast(msg) {
+function showToast(msg, variant = 'success') {
   pendingDeleteUndo = null;
-  if (deleteUndoTimer) clearTimeout(deleteUndoTimer);
-  deleteUndoTimer = null;
-  shareToast.innerHTML = '';
-  shareToast.textContent = msg;
-  shareToast.classList.add('show');
-  setTimeout(() => shareToast.classList.remove('show'), 2800);
+  hideDeleteToast();
+  shareToastList.appendChild(buildPfToastAlert({ message: msg, variant, timeout: 8000 }));
 }
 
 /* ═══════════════════════════════════════════════════
@@ -4183,7 +4232,7 @@ function typeOutAndApply(queryStr) {
   let i=0;
   function typeNext() {
     if (i<=queryStr.length) { inputEl.value=queryStr.slice(0,i); if(clearUtility) clearUtility.classList.remove('is-empty'); i++; setTimeout(typeNext,delay); }
-    else { setTimeout(()=>{ commitInput(); showToast('Tip: you can type this syntax directly next time!'); }, 700); }
+    else { setTimeout(()=>{ commitInput(); showToast('Tip: you can type this syntax directly next time!', 'info'); }, 700); }
   }
   typeNext();
 }
