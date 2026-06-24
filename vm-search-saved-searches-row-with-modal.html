@@ -460,22 +460,26 @@
       box-shadow: none;
     }
     #saveSearchModal,
-    #advancedModal {
+    #advancedModal,
+    #deleteSavedSearchModal {
       position: fixed;
       inset: 0;
       z-index: 1100;
     }
     #saveSearchModal[hidden],
-    #advancedModal[hidden] { display: none !important; }
+    #advancedModal[hidden],
+    #deleteSavedSearchModal[hidden] { display: none !important; }
     #saveSearchModal:not([hidden]),
-    #advancedModal:not([hidden]) {
+    #advancedModal:not([hidden]),
+    #deleteSavedSearchModal:not([hidden]) {
       display: flex;
       align-items: center;
       justify-content: center;
       background-color: var(--pf-t--global--background--color--overlay--default, rgba(0, 0, 0, 0.4));
     }
     #saveSearchModal .pf-v6-c-bullseye,
-    #advancedModal .pf-v6-c-bullseye {
+    #advancedModal .pf-v6-c-bullseye,
+    #deleteSavedSearchModal .pf-v6-c-bullseye {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -785,8 +789,15 @@
       box-shadow: 0 4px 12px rgba(0,0,0,.2);
       z-index: 999; opacity: 0; transform: translateY(8px);
       transition: opacity .25s, transform .25s; pointer-events: none;
+      display: flex; align-items: center; gap: 12px;
     }
-    .share-toast.show { opacity: 1; transform: translateY(0); }
+    .share-toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .share-toast__undo {
+      background: transparent; border: 0; padding: 0;
+      color: #fff; font-size: 14px; font-weight: 600;
+      text-decoration: underline; cursor: pointer;
+    }
+    .share-toast__undo:hover { color: #f0f0f0; }
   </style>
 </head>
 <body>
@@ -1478,6 +1489,29 @@
       <div class="pf-v6-c-modal-box__footer">
         <button class="pf-v6-c-button pf-m-primary" type="button" id="btnConfirmSaveSearch">Save</button>
         <button class="pf-v6-c-button pf-m-link" type="button" id="btnCancelSaveSearch">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete default saved search modal -->
+<div class="pf-v6-c-backdrop" id="deleteSavedSearchModal" hidden aria-hidden="true">
+  <div class="pf-v6-c-bullseye">
+    <div class="pf-v6-c-modal-box" role="dialog" aria-modal="true"
+         aria-labelledby="deleteSavedSearchModalTitle" style="min-width:480px;max-width:560px;">
+      <button class="pf-v6-c-button pf-m-plain pf-v6-c-modal-box__close" type="button"
+              id="btnCloseDeleteSavedSearch" aria-label="Close">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+      <div class="pf-v6-c-modal-box__header">
+        <h1 class="pf-v6-c-modal-box__title" id="deleteSavedSearchModalTitle">Delete default saved search?</h1>
+      </div>
+      <div class="pf-v6-c-modal-box__body">
+        <p id="deleteSavedSearchModalBody" style="margin:0;font-size:14px;line-height:1.5;"></p>
+      </div>
+      <div class="pf-v6-c-modal-box__footer">
+        <button class="pf-v6-c-button pf-m-primary" type="button" id="btnConfirmDeleteSavedSearch">Delete</button>
+        <button class="pf-v6-c-button pf-m-link" type="button" id="btnCancelDeleteSavedSearch">Cancel</button>
       </div>
     </div>
   </div>
@@ -3363,11 +3397,7 @@ function renderFavorites() {
     del.innerHTML = '<i class="fa-regular fa-trash-can" aria-hidden="true"></i>';
     del.addEventListener('click', e => {
       e.stopPropagation();
-      const list = getFavorites();
-      list.splice(idx, 1);
-      if (list.length && !list.some(x => x.starred)) list[0].starred = true;
-      setFavorites(list);
-      renderFavorites();
+      requestDeleteSavedSearch(idx);
     });
 
     li.appendChild(star);
@@ -3527,6 +3557,8 @@ function buildSuggestions() {
   if (advancedModal && !advancedModal.hasAttribute('hidden')) return;
   const saveModal = document.getElementById('saveSearchModal');
   if (saveModal && !saveModal.hasAttribute('hidden')) return;
+  const deleteModal = document.getElementById('deleteSavedSearchModal');
+  if (deleteModal && !deleteModal.hasAttribute('hidden')) return;
   const raw   = inputEl.value;
   const lower = raw.toLowerCase().trimStart();
   suggestMenu.innerHTML = '';
@@ -3798,10 +3830,110 @@ function refresh() {
 /* ═══════════════════════════════════════════════════
    Toast
 ═══════════════════════════════════════════════════ */
+let deleteUndoTimer = null;
+let pendingDeleteUndo = null;
+
+function hideDeleteToast() {
+  if (deleteUndoTimer) clearTimeout(deleteUndoTimer);
+  deleteUndoTimer = null;
+  shareToast.classList.remove('show');
+  setTimeout(() => {
+    if (!shareToast.classList.contains('show')) {
+      shareToast.innerHTML = '';
+    }
+  }, 250);
+}
+
+function showDeletedSavedSearchToast(name, removedItem, originalIndex) {
+  if (deleteUndoTimer) clearTimeout(deleteUndoTimer);
+  pendingDeleteUndo = null;
+
+  shareToast.innerHTML = '';
+  const text = document.createElement('span');
+  text.textContent = `Deleted "${name}".`;
+  const undoBtn = document.createElement('button');
+  undoBtn.type = 'button';
+  undoBtn.className = 'share-toast__undo';
+  undoBtn.textContent = 'Undo';
+  undoBtn.addEventListener('click', () => {
+    if (pendingDeleteUndo) {
+      const list = getFavorites();
+      const insertAt = Math.min(Math.max(pendingDeleteUndo.index, 0), list.length);
+      list.splice(insertAt, 0, pendingDeleteUndo.item);
+      setFavorites(list);
+      renderFavorites();
+      pendingDeleteUndo = null;
+    }
+    hideDeleteToast();
+  });
+  shareToast.appendChild(text);
+  shareToast.appendChild(undoBtn);
+  shareToast.classList.add('show');
+
+  pendingDeleteUndo = { item: removedItem, index: originalIndex };
+  deleteUndoTimer = setTimeout(() => {
+    pendingDeleteUndo = null;
+    hideDeleteToast();
+  }, 8000);
+}
+
 function showToast(msg) {
+  pendingDeleteUndo = null;
+  if (deleteUndoTimer) clearTimeout(deleteUndoTimer);
+  deleteUndoTimer = null;
+  shareToast.innerHTML = '';
   shareToast.textContent = msg;
   shareToast.classList.add('show');
   setTimeout(() => shareToast.classList.remove('show'), 2800);
+}
+
+/* ═══════════════════════════════════════════════════
+   Saved search delete
+═══════════════════════════════════════════════════ */
+let pendingDeleteSavedSearchIdx = null;
+
+function deleteSavedSearchAt(idx) {
+  const list = getFavorites();
+  const removed = list.splice(idx, 1)[0];
+  if (list.length && !list.some(x => x.starred)) list[0].starred = true;
+  setFavorites(list);
+  renderFavorites();
+  return removed;
+}
+
+function performSavedSearchDelete(idx) {
+  const list = getFavorites();
+  const item = list[idx];
+  if (!item) return;
+  const removed = deleteSavedSearchAt(idx);
+  showDeletedSavedSearchToast(removed.name, { ...removed }, idx);
+}
+
+function openDeleteDefaultSavedSearchModal(item, idx) {
+  const modal = document.getElementById('deleteSavedSearchModal');
+  const body = document.getElementById('deleteSavedSearchModalBody');
+  if (!modal || !body) return;
+  pendingDeleteSavedSearchIdx = idx;
+  body.textContent = `"${item.name}" is your default saved search. Another saved search will become the default, or none if this is the last one.`;
+  modal.removeAttribute('hidden');
+  modal.setAttribute('aria-hidden', 'false');
+  document.getElementById('btnConfirmDeleteSavedSearch')?.focus();
+}
+
+function closeDeleteDefaultSavedSearchModal() {
+  const modal = document.getElementById('deleteSavedSearchModal');
+  pendingDeleteSavedSearchIdx = null;
+  modal?.setAttribute('hidden', '');
+  modal?.setAttribute('aria-hidden', 'true');
+}
+
+function requestDeleteSavedSearch(idx) {
+  const list = getFavorites();
+  const item = list[idx];
+  if (!item) return;
+  hideSavedDescTooltip();
+  if (item.starred) openDeleteDefaultSavedSearchModal(item, idx);
+  else performSavedSearchDelete(idx);
 }
 
 /* ═══════════════════════════════════════════════════
@@ -3924,6 +4056,19 @@ document.getElementById('btnCancelSaveSearch')?.addEventListener('click', closeS
 document.getElementById('btnConfirmSaveSearch')?.addEventListener('click', confirmSaveSearch);
 saveSearchModal?.addEventListener('click', e => {
   if (!e.target.closest('.pf-v6-c-modal-box')) closeSaveSearchModal();
+});
+
+const deleteSavedSearchModal = document.getElementById('deleteSavedSearchModal');
+document.getElementById('btnConfirmDeleteSavedSearch')?.addEventListener('click', () => {
+  if (pendingDeleteSavedSearchIdx == null) return;
+  const idx = pendingDeleteSavedSearchIdx;
+  closeDeleteDefaultSavedSearchModal();
+  performSavedSearchDelete(idx);
+});
+document.getElementById('btnCancelDeleteSavedSearch')?.addEventListener('click', closeDeleteDefaultSavedSearchModal);
+document.getElementById('btnCloseDeleteSavedSearch')?.addEventListener('click', closeDeleteDefaultSavedSearchModal);
+deleteSavedSearchModal?.addEventListener('click', e => {
+  if (!e.target.closest('.pf-v6-c-modal-box')) closeDeleteDefaultSavedSearchModal();
 });
 
 btnSavedSearches?.addEventListener('click', e => {
@@ -4194,6 +4339,7 @@ advancedModal.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
+  if (deleteSavedSearchModal && !deleteSavedSearchModal.hasAttribute('hidden')) { closeDeleteDefaultSavedSearchModal(); return; }
   if (saveSearchModal && !saveSearchModal.hasAttribute('hidden')) { closeSaveSearchModal(); return; }
   if (advancedModal && !advancedModal.hasAttribute('hidden')) closeAdvancedModal();
 });
