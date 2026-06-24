@@ -3480,7 +3480,7 @@ function renderFavorites() {
     const empty = document.createElement('li');
     empty.className = 'saved-menu-empty';
     if (filter) {
-      empty.textContent = `No saved searches match ${savedFilterText.trim()}.`;
+      empty.textContent = `No saved searches match [${savedFilterText.trim()}].`;
     } else {
       const title = document.createElement('span');
       title.className = 'saved-menu-empty__title';
